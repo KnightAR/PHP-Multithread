@@ -104,4 +104,23 @@ class Multiple
         }
         pcntl_wait($status, WNOHANG);
     }
+    
+    /**
+     * Wait for all tasks in the task manager to complete
+     *
+     * @return void
+     */
+    public function wait()
+    {
+        // Parent Process : Checking all children have ended (to avoid zombie / defunct threads)
+        while(!empty($this->_activeThreads)) 
+        {
+            $endedPid = pcntl_wait($status);
+            if(-1 == $endedPid) 
+            {
+                $this->_activeThreads = array();
+            }
+            unset($this->_activeThreads[$endedPid]);
+        }
+    }
 }
