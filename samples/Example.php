@@ -20,7 +20,7 @@
  *
  * @author      Al-Fallouji Bashar
  */
-require(__DIR__ . '/../vendor/autoload.php');
+require(__DIR__ . '/../../../autoload.php');
 
 $maxThreads = 5;
 echo 'Example of the multi-thread manager with ' . $maxThreads . ' threads' . PHP_EOL . PHP_EOL;
@@ -28,7 +28,13 @@ $exampleTask = new Threading\Task\Example();
 $multithreadManager = new Threading\Multiple();
 
 $cpt = 0;
-while (++$cpt <= 30)
+while (++$cpt <= 34)
 {
     $multithreadManager->start($exampleTask);
 }
+
+echo "Waiting for remaining threads to finish." . PHP_EOL;
+
+$multithreadManager->wait();
+
+echo "Done." . PHP_EOL;

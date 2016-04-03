@@ -49,6 +49,7 @@ class Multiple
     public function __construct($maxThreads = 5)
     {
         $this->maxThreads = $maxThreads;
+        $this->parentPID = getmypid();
     }
 
     /**
@@ -106,13 +107,17 @@ class Multiple
     }
     
     /**
-     * Wait for all tasks in the task manager to complete
+     * Wait for all remaining children to complete
      *
      * @return void
      */
     public function wait()
     {
-        // Parent Process : Checking all children have ended (to avoid zombie / defunct threads)
+        if ($this->parentPID != getmypid()) {
+            throw new \Exception("Wait() should only be ran on the parent process!");
+        }
+        
+        // Parent Process : Waiting for all children to complete
         while(!empty($this->_activeThreads)) 
         {
             $endedPid = pcntl_wait($status);
