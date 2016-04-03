@@ -1,6 +1,6 @@
 {
-	"name": "alfallouji/php_multithread",
-	"description": "iPHP library to handle multi-threading",
+	"name": "knightar/php_multithread",
+	"description": "PHP library to handle multi-threading",
 	"authors": [
 		{
 			"name": "Bashar Al-Fallouji",
