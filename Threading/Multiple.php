@@ -72,7 +72,7 @@ class Multiple
             $this->_activeThreads[$pid] = true;
 
             // Reached maximum number of threads allowed
-            if($this->maxThreads >= count($this->_activeThreads)) 
+            if($this->maxThreads <= count($this->_activeThreads)) 
             {
                 // Parent Process : Checking all children have ended (to avoid zombie / defunct threads)
                 while(!empty($this->_activeThreads)) 
