@@ -91,7 +91,7 @@ class Multiple
                     
                     // Break the loop and continue when a child exited so we don't have to wait for all children to exit to call the next thread
                     if ($continueWhenChildExited) {
-                        break;
+                        break 1;
                     }
                 }
             }
@@ -110,13 +110,8 @@ class Multiple
             {
                 $task->onFailure();
             }
-           
-            if (substr(PHP_SAPI, 0, 3) == 'cli') {
-                exit;
-            }
             
-            pcntl_wexitstatus(null);
-            //posix_kill(getmypid(), 9);
+            posix_kill(getmypid(), 9);
         }
         pcntl_wait($status, WNOHANG);
     }
