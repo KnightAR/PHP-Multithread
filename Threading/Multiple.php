@@ -101,8 +101,12 @@ class Multiple
                 $task->onFailure();
             }
            
-            posix_kill(getmypid(), 9);
-            exit();
+            if (substr(PHP_SAPI, 0, 3) == 'cli') {
+                exit;
+            }
+            
+            pcntl_wexitstatus(null);
+            //posix_kill(getmypid(), 9);
         }
         pcntl_wait($status, WNOHANG);
     }
