@@ -59,7 +59,7 @@ class Multiple
      *
      * @return void
      */
-    public function start(AbstractTask $task)
+    public function start(AbstractTask $task, $continueWhenChildExited = false)
     {
         $pid = pcntl_fork();
         if ($pid == -1) 
@@ -88,6 +88,11 @@ class Multiple
                         $this->_activeThreads = array();
                     }
                     unset($this->_activeThreads[$endedPid]);
+                    
+                    // Break the loop and continue when a child exited so we don't have to wait for all children to exit to call the next thread
+                    if ($continueWhenChildExited) {
+                        break;
+                    }
                 }
             }
         } 
