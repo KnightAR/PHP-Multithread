@@ -77,7 +77,12 @@ class Multiple
                 // Parent Process : Checking all children have ended (to avoid zombie / defunct threads)
                 while(!empty($this->_activeThreads)) 
                 {
-                    $endedPid = pcntl_wait($status);
+                    $endedPid = pcntl_wait($status, WNOHANG);
+                    if ($endedPid === 0) {
+                        usleep(500);
+                        continue;
+                    }
+                    
                     if(-1 == $endedPid) 
                     {
                         $this->_activeThreads = array();
@@ -125,7 +130,12 @@ class Multiple
         // Parent Process : Waiting for all children to complete
         while(!empty($this->_activeThreads)) 
         {
-            $endedPid = pcntl_wait($status);
+            $endedPid = pcntl_wait($status, WNOHANG);
+            if ($endedPid === 0) {
+                usleep(500);
+                continue;
+            }
+            
             if(-1 == $endedPid) 
             {
                 $this->_activeThreads = array();
