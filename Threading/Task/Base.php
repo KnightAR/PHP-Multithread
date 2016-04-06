@@ -27,6 +27,13 @@ namespace Threading\Task;
  */
 abstract class Base
 {
+    public $params = array();
+    
+    public function __construct(array $params = array())
+    {
+        $this->params = $params;
+    }
+    
     /**
      * Initialize (called first by the task manager)
      * 
@@ -58,11 +65,20 @@ abstract class Base
     }
 
     /**
+     * Called by the task manager after the task has ended, This is called on the PARENT process and has no access to varibles created within the child
+     * 
+     * @return void
+     */
+    public function onComplete() 
+    {
+    }
+    
+    /**
      * Main method containing the logic to be executed by the task
      * 
-     * @param $params array Assoc array of params
+     * @param void
      *
      * @return boolean True upon success, false otherwise
      */
-    abstract public function process(array $params = array());
+    abstract public function process();
 }

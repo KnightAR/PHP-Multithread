@@ -23,6 +23,7 @@
 namespace Threading;
 
 use Threading\Task\Base as AbstractTask;
+use Threading\Thread as ThreadTask;
 
 /**
  * Multi-thread / task manager
@@ -34,6 +35,7 @@ class Multiple
      * @var array
      */
     protected $_activeThreads = array();
+    protected $_threads = array();
 
     /**
      * Maximum number of child threads that can be created by the parent
@@ -53,66 +55,66 @@ class Multiple
     }
 
     /**
+     * Queue a task to be ran asynchronously
+     *
+     * @param AbstractTask $task Task to start
+     *
+     * @return void
+     */
+    public function add(AbstractTask &$task)
+    {
+        $this->_threads[] = new ThreadTask($task);
+    }
+    
+    /**
+     * Run the tasks
+     *
+     * @param callable $callable Function to run when all tasks have been forked
+     *
+     * @return void
+     */
+    public function run($callable = null)
+    {
+        foreach($this->_threads as &$thread)
+        {
+            $pid = $thread->start();
+            $this->_activeThreads[$pid] =& $thread;
+            
+            // Reached maximum number of threads allowed
+            if ($this->maxThreads <= count($this->_activeThreads)) 
+            {
+                $this->wait(true);
+            }
+        }
+        
+        if (is_callable('callable'))
+        {
+            $callable();
+        }
+    }
+    
+    /**
      * Start the task manager
      *
      * @param AbstractTask $task Task to start
      *
      * @return void
      */
-    public function start(AbstractTask $task, $continueWhenChildExited = false)
+    public function start(AbstractTask &$task, $continueWhenChildExited = false)
     {
-        $pid = pcntl_fork();
-        if ($pid == -1) 
-        {
-            throw new \Exception('[Pid:' . getmypid() . '] Could not fork process');
-        } 
+        $thread = new ThreadTask($task);
+        $pid = $thread->start();
         // Parent thread
-        elseif ($pid) 
+        if ($pid) 
         {
-            $this->_activeThreads[$pid] = true;
+            $this->_activeThreads[$pid] =& $thread;
 
             // Reached maximum number of threads allowed
             if($this->maxThreads <= count($this->_activeThreads)) 
             {
-                // Parent Process : Checking all children have ended (to avoid zombie / defunct threads)
-                while(!empty($this->_activeThreads)) 
-                {
-                    $endedPid = pcntl_wait($status); //, WNOHANG
-                    if ($endedPid === 0) {
-                        //usleep(500);
-                        continue;
-                    }
-                    
-                    if(-1 == $endedPid) 
-                    {
-                        $this->_activeThreads = array();
-                    }
-                    unset($this->_activeThreads[$endedPid]);
-                    
-                    // Break the loop and continue when a child exited so we don't have to wait for all children to exit to call the next thread
-                    if ($continueWhenChildExited) {
-                        break 1;
-                    }
-                }
+                $this->wait(true);
             }
         } 
-        // Child thread
-        else 
-        {
-            $task->initialize();
-
-            // On success
-            if ($task->process())
-            {
-                $task->onSuccess();
-            } 
-            else 
-            {
-                $task->onFailure();
-            }
-            
-            posix_kill(getmypid(), 9);
-        }
         pcntl_wait($status, WNOHANG);
     }
     
@@ -121,9 +123,10 @@ class Multiple
      *
      * @return void
      */
-    public function wait()
+    public function wait($breakonComplete = false)
     {
-        if ($this->parentPID != getmypid()) {
+        if ($this->parentPID != getmypid())
+        {
             throw new \Exception("Wait() should only be ran on the parent process!");
         }
         
@@ -131,16 +134,28 @@ class Multiple
         while(!empty($this->_activeThreads)) 
         {
             $endedPid = pcntl_wait($status); //, WNOHANG
-            if ($endedPid === 0) {
+            if ($endedPid === 0)
+            {
                 //usleep(500);
                 continue;
             }
             
             if(-1 == $endedPid) 
             {
+                foreach($this->_activeThreads as &$thread)
+                {
+                    $thread->done();
+                }
                 $this->_activeThreads = array();
             }
+            
+            $this->_activeThreads[$endedPid]->done();
             unset($this->_activeThreads[$endedPid]);
+            
+            if ($breakonComplete)
+            {
+                break 1;
+            }
         }
     }
 }
