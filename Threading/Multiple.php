@@ -148,9 +148,11 @@ class Multiple
                 }
                 $this->_activeThreads = array();
             }
-            
-            $this->_activeThreads[$endedPid]->done();
-            unset($this->_activeThreads[$endedPid]);
+            elseif (isset($this->_activeThreads[$endedPid]))
+            {
+                $this->_activeThreads[$endedPid]->done();
+                unset($this->_activeThreads[$endedPid]);
+            }
             
             if ($breakonComplete)
             {
